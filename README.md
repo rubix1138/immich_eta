@@ -50,3 +50,22 @@ In the Immich web UI:
 
 ```bash
 export IMMICH_API_KEY="paste_your_key_here"
+```
+
+## Example Output
+
+```
+[2025-12-27 19:56:43] total pending=138,939 (waiting=138,932, active=7, delayed=0, paused=0) failed=0
+  Δ total=-967 pending  drained=+967 in 120.1s  inst=28,987/hr  ema=29,462/hr  avg=29,644/hr
+  ETA (total pending, using EMA): ~4:42:57
+  ETA (critical path: metadataExtraction, using EMA): ~5:56:05  (pending=108,264, rate=18,242/hr)
+  Queues (top by pending):
+    - metadataExtraction: pending=108,264  drained=+581  ema=18,077/hr  ETA ~5:59:20
+    - smartSearch: pending=30,675  drained=+386  ema=11,384/hr  ETA ~2:41:40
+    - thumbnailGeneration: pending=0  drained=+0  ema=0/hr  ETA n/a
+    - videoConversion: pending=0  drained=+0  ema=0/hr  ETA n/a
+    - storageTemplateMigration: pending=0  drained=+0  ema=1/hr  ETA ~0s
+    - migration: pending=0  drained=+0  ema=0/hr  ETA n/a
+    - backgroundTask: pending=0  drained=+0  ema=0/hr  ETA n/a
+    - search: pending=0  drained=+0  ema=0/hr  ETA n/a
+```
