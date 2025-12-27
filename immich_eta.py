@@ -151,6 +151,10 @@ def main():
     ap.add_argument("--top", type=int, default=8, help="Show top N queues by pending (default 8)")
     ap.add_argument("--ema-alpha", type=float, default=0.30,
                     help="EMA smoothing factor for rate (0.1=very smooth, 0.5=snappier). Default 0.30")
+    ap.add_argument("--focus", default=None,
+                    help="Optional queue name to highlight (e.g. metadataExtraction)")
+    ap.add_argument("--show-critical-path", action="store_true",
+                    help="Also show ETA for the slowest (max ETA) non-zero queue")
     args = ap.parse_args()
 
     api_key = os.environ.get("IMMICH_API_KEY", "").strip()
@@ -257,11 +261,34 @@ def main():
             eta_sec = numerator / (ema_total_rate or 1e-9)
             label = "override remaining" if args.remaining is not None else "total pending"
             print(f"  ETA ({label}, using EMA): ~{human_td(eta_sec)}")
+        # Critical-path ETA: max per-queue ETA among non-zero queues (EMA-based)
+        if args.show_critical_path and prev_ts is not None:
+            worst = None  # (eta_seconds, qname, pending, rate)
+            for qname, qpending in perq.items():
+                if qpending <= 0:
+                    continue
+                q_ema = ema_queue_rate.get(qname)
+                if q_ema is None or q_ema <= 0:
+                    continue
+                q_eta = qpending / q_ema
+                if worst is None or q_eta > worst[0]:
+                    worst = (q_eta, qname, qpending, q_ema)
+
+            if worst:
+                q_eta, qname, qpending, q_ema = worst
+                print(f"  ETA (critical path: {qname}, using EMA): ~{human_td(q_eta)}  (pending={qpending:,}, rate={fmt_rate_per_hr(q_ema)})")
+
         elif prev_ts is not None:
             print("  ETA: n/a (rate <= 0)")
 
         # Per-queue breakdown: top queues by current pending
-        topq = sorted(perq.items(), key=lambda x: x[1], reverse=True)[:args.top]
+        #topq = sorted(perq.items(), key=lambda x: x[1], reverse=True)[:args.top]
+        topq = sorted(perq.items(), key=lambda x: x[1], reverse=True)
+        if args.focus:
+            # Move focused queue to the top if present
+            topq = sorted(topq, key=lambda x: (0 if x[0] == args.focus else 1, -x[1]))
+        topq = topq[:args.top]
+
         if topq:
             print("  Queues (top by pending):")
             for qname, qpending in topq:
@@ -312,3 +339,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
