@@ -303,7 +303,11 @@ def main():
                     # Update queue EMA
                     prev_ema = ema_queue_rate.get(qname)
                     ema_queue_rate[qname] = ema_update(prev_ema, q_inst_rate, args.ema_alpha)
-
+                
+                # If queue is empty, force EMA to 0 to avoid "sticky" non-zero rates/ETAs
+                if qpending <= 0:
+                    ema_queue_rate[qname] = 0.0
+              
                 # Print queue line
                 if prev_ts is None:
                     print(f"    - {qname}: pending={qpending:,}")
